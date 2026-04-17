@@ -2,6 +2,9 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
+import fs from 'fs';
+import { requireAdmin } from '../middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,10 +18,10 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    // Generate unique filename with original extension
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, 'image-' + uniqueSuffix + ext);
+    // Generate cryptographically secure random filename
+    const randomName = crypto.randomBytes(32).toString('hex');
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `img-${randomName}${ext}`);
   }
 });
 
@@ -28,10 +31,11 @@ const fileFilter = (req, file, cb) => {
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = allowedTypes.test(file.mimetype);
 
+  // Additional security: check magic numbers would be better but requires reading the buffer
   if (mimetype && extname) {
     return cb(null, true);
   } else {
-    cb(new Error('Seuls les fichiers image (JPEG, PNG, GIF, WebP) sont autorisés'));
+    cb(new Error('Only image files (JPEG, PNG, GIF, WebP) are allowed'));
   }
 };
 
@@ -44,25 +48,33 @@ const upload = multer({
   fileFilter: fileFilter
 });
 
-// Upload endpoint
-router.post('/', upload.single('image'), (req, res) => {
+// Upload endpoint - protected by admin authentication
+router.post('/', requireAdmin, upload.single('image'), (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'Aucun fichier uploadé' });
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Validate file size (should already be limited by multer but double-check)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (req.file.size > maxSize) {
+      // Delete the file if it's too large
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: 'File too large (max 5MB)' });
     }
 
     // Return the URL to access the uploaded file
     const fileUrl = `/uploads/${req.file.filename}`;
     
     res.json({
-      message: 'Image uploadée avec succès',
+      message: 'Image uploaded successfully',
       url: fileUrl,
       filename: req.file.filename,
       size: req.file.size
     });
   } catch (error) {
     console.error('Upload error:', error);
-    res.status(500).json({ error: 'Erreur lors de l\'upload' });
+    res.status(500).json({ error: 'Upload failed' });
   }
 });
 

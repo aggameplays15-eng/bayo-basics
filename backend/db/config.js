@@ -4,9 +4,14 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
+    ssl: isProduction ? {
+        rejectUnauthorized: true,
+        ca: process.env.DB_SSL_CA
+    } : {
         rejectUnauthorized: false
     }
 });

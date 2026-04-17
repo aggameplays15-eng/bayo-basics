@@ -3,10 +3,47 @@ import fetch from 'node-fetch';
 
 const router = express.Router();
 
+// Input sanitization helper
+const sanitizeChatInput = (input) => {
+  if (typeof input !== 'string') return '';
+  
+  // Remove common prompt injection patterns
+  const injectionPatterns = [
+    /ignore\s+(all\s+)?(previous\s+)?instructions?/gi,
+    /oublie\s+(toutes\s+les\s+)?instructions?/gi,
+    /system\s*:/gi,
+    /prompt\s*:/gi,
+    /instruction\s*:/gi,
+    /<\|system\|>/gi,
+    /you\s+are\s+now/gi,
+    /tu\s+es\s+maintenant/gi,
+    /become\s+(an?\s+)?hacker/gi,
+    /deviens\s+un\s+hacker/gi,
+  ];
+  
+  let sanitized = input;
+  injectionPatterns.forEach(pattern => {
+    sanitized = sanitized.replace(pattern, '[BLOCKED]');
+  });
+  
+  // Limit length to prevent abuse
+  return sanitized.substring(0, 500);
+};
+
+// Validate products data
+const validateProducts = (products) => {
+  if (!Array.isArray(products)) return [];
+  return products.slice(0, 50); // Limit to 50 products max
+};
+
 // Chat endpoint - uses backend API key
 router.post('/message', async (req, res) => {
   try {
-    const { message, products } = req.body;
+    let { message, products } = req.body;
+    
+    // Sanitize inputs
+    message = sanitizeChatInput(message);
+    products = validateProducts(products);
     const apiKey = process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
@@ -32,6 +69,11 @@ router.post('/message', async (req, res) => {
       price: p.price
     }));
 
+    // Log suspicious activity for monitoring
+    if (message.includes('[BLOCKED]')) {
+      console.warn(`[SECURITY] Potential prompt injection blocked from IP: ${req.ip}, User-Agent: ${req.headers['user-agent']}`);
+    }
+    
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
