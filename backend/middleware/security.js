@@ -5,7 +5,7 @@ import cors from 'cors';
 // Rate limiting configurations
 export const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // 100 requests per IP
+    max: 1000, // 1000 requests per IP (increased for testing)
     message: { error: 'Too many requests, please try again later' },
     standardHeaders: true,
     legacyHeaders: false,
@@ -13,14 +13,14 @@ export const generalLimiter = rateLimit({
 
 export const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // 5 attempts
+    max: 10, // 10 attempts (increased for testing)
     skipSuccessfulRequests: true,
     message: { error: 'Too many login attempts, please try again later' },
 });
 
 export const apiLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    max: 30, // 30 requests per minute for API endpoints
+    max: 100, // 100 requests per minute for API endpoints (increased for testing)
     message: { error: 'API rate limit exceeded' },
 });
 

@@ -33,6 +33,14 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Log environment for debugging
+console.log('Environment check:', {
+  NODE_ENV: process.env.NODE_ENV,
+  PORT: PORT,
+  DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'NOT SET',
+  JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT SET'
+});
+
 // Security middleware - Order matters!
 app.use(helmetConfig); // Security headers
 app.use(cors(corsOptions)); // CORS with strict origin checking
