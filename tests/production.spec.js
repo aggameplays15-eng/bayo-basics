@@ -48,6 +48,22 @@ test.describe('Bayo Basics Production Tests', () => {
     console.log(`✅ Frontend loaded (products: ${productLinks})`);
   });
 
+  test('Chatbot is present on frontend', async ({ page }) => {
+    await page.goto(BASE_URL);
+    await page.waitForLoadState('networkidle');
+    
+    // Check if chatbot button is present
+    const chatbotButton = await page.locator('button:has-text("1")').count();
+    console.log(`Chatbot button found: ${chatbotButton}`);
+    
+    // Check if chatbot is in the DOM
+    const chatbotInDOM = await page.locator('.fixed').filter({ hasText: 'Bayo AI' }).count();
+    console.log(`Chatbot in DOM: ${chatbotInDOM}`);
+    
+    expect(chatbotButton + chatbotInDOM).toBeGreaterThan(0);
+    console.log('✅ Chatbot is present on frontend');
+  });
+
   test('Products API returns data', async ({ request }) => {
     const response = await request.get(`${API_URL}/products`);
     expect(response.ok()).toBeTruthy();
