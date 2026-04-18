@@ -13,7 +13,6 @@ const BottomNav = () => {
     { label: "Accueil", icon: Home, path: "/" },
     { label: "Boutique", icon: ShoppingBag, path: "/products" },
     { label: "Panier", icon: ShoppingCart, path: "/cart", badge: totalItems },
-    { label: "Commandes", icon: ClipboardList, path: "/orders" },
     { label: "Profil", icon: UserCircle, path: "/profile" },
   ];
 
