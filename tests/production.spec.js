@@ -129,6 +129,60 @@ test.describe('Bayo Basics Production Tests', () => {
     console.log(`✅ User registration works for ${testUser.email}`);
   });
 
+  test('User cannot set admin role during registration', async ({ request }) => {
+    const maliciousUser = {
+      name: 'Malicious User',
+      email: `malicious${Date.now()}@example.com`,
+      password: 'test123456',
+      role: 'admin' // Try to set admin role
+    };
+    
+    const response = await request.post(`${API_URL}/auth/register`, {
+      data: maliciousUser
+    });
+    
+    expect(response.ok()).toBeTruthy();
+    
+    const data = await response.json();
+    expect(data.user.role).toBe('user'); // Should be 'user', not 'admin'
+    
+    console.log('✅ User cannot set admin role during registration');
+    console.log('   - Role is forced to:', data.user.role);
+  });
+
+  test('User cannot modify role in profile update', async ({ request }) => {
+    // Register a user first
+    const registerResponse = await request.post(`${API_URL}/auth/register`, {
+      data: {
+        name: 'Test User',
+        email: `testrole${Date.now()}@example.com`,
+        password: 'test123456'
+      }
+    });
+    
+    const registerData = await registerResponse.json();
+    const token = registerData.token;
+    
+    // Try to update role to admin
+    const response = await request.put(`${API_URL}/auth/profile`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      data: {
+        name: 'Updated Name',
+        role: 'admin' // Try to set admin role
+      }
+    });
+    
+    expect(response.ok()).toBeTruthy();
+    
+    const data = await response.json();
+    expect(data.user.role).toBe('user'); // Should still be 'user'
+    
+    console.log('✅ User cannot modify role in profile update');
+    console.log('   - Role remains:', data.user.role);
+  });
+
   test('Product categories API works', async ({ request }) => {
     const response = await request.get(`${API_URL}/products/meta/categories`);
     expect(response.ok()).toBeTruthy();
