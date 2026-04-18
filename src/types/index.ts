@@ -13,11 +13,14 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  category: 'Vêtements' | 'Électronique' | 'Accessoires' | 'Général';
+  category: 'Vêtements' | 'Électronique' | 'Accessoires' | 'Chaussures' | 'Général';
   image: string;
   stock: number;
   sizes?: string[];
   colors?: string[];
+  specs?: string[];
+  material?: string;
+  warranty?: string;
   isActive?: boolean;
 }
 
