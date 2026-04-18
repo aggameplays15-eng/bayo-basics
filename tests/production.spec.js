@@ -163,4 +163,138 @@ test.describe('Bayo Basics Production Tests', () => {
     // At least one security header should be present
     expect(csp || hsts).toBeDefined();
   });
+
+  test('Admin login works', async ({ request }) => {
+    const response = await request.post(`${API_URL}/auth/login`, {
+      data: {
+        email: 'admin@bayo.com',
+        password: 'admin123'
+      }
+    });
+    
+    expect(response.ok()).toBeTruthy();
+    
+    const data = await response.json();
+    expect(data.user).toBeDefined();
+    expect(data.user.role).toBe('admin');
+    expect(data.token).toBeDefined();
+    
+    console.log('✅ Admin login works');
+  });
+
+  test('Admin can access protected routes', async ({ request }) => {
+    // First login as admin
+    const loginResponse = await request.post(`${API_URL}/auth/login`, {
+      data: {
+        email: 'admin@bayo.com',
+        password: 'admin123'
+      }
+    });
+    
+    const loginData = await loginResponse.json();
+    const token = loginData.token;
+    
+    // Try to access admin-only route (all orders)
+    const response = await request.get(`${API_URL}/orders`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    expect(response.ok()).toBeTruthy();
+    
+    const data = await response.json();
+    expect(data.orders).toBeDefined();
+    
+    console.log(`✅ Admin can access protected routes (${data.orders.length} orders)`);
+  });
+
+  test('Admin can create product', async ({ request }) => {
+    // Login as admin
+    const loginResponse = await request.post(`${API_URL}/auth/login`, {
+      data: {
+        email: 'admin@bayo.com',
+        password: 'admin123'
+      }
+    });
+    
+    const loginData = await loginResponse.json();
+    const token = loginData.token;
+    
+    // Create a test product
+    const testProduct = {
+      name: 'Test Product ' + Date.now(),
+      description: 'Test product for automated testing',
+      price: 150000,
+      category: 'Accessoires',
+      image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500',
+      stock: 10
+    };
+    
+    const response = await request.post(`${API_URL}/products`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      data: testProduct
+    });
+    
+    expect(response.ok()).toBeTruthy();
+    
+    const data = await response.json();
+    expect(data.product).toBeDefined();
+    expect(data.product.name).toBe(testProduct.name);
+    
+    console.log('✅ Admin can create product:', data.product.name);
+    
+    // Clean up - delete the test product
+    await request.delete(`${API_URL}/products/${data.product.id}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  });
+
+  test('Admin can update order status', async ({ request }) => {
+    // Login as admin
+    const loginResponse = await request.post(`${API_URL}/auth/login`, {
+      data: {
+        email: 'admin@bayo.com',
+        password: 'admin123'
+      }
+    });
+    
+    const loginData = await loginResponse.json();
+    const token = loginData.token;
+    
+    // Get all orders
+    const ordersResponse = await request.get(`${API_URL}/orders`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    const ordersData = await ordersResponse.json();
+    
+    if (ordersData.orders.length > 0) {
+      const orderId = ordersData.orders[0].id;
+      const newStatus = 'en_cours';
+      
+      // Update order status
+      const response = await request.put(`${API_URL}/orders/${orderId}/status`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        data: { status: newStatus }
+      });
+      
+      expect(response.ok()).toBeTruthy();
+      
+      const data = await response.json();
+      expect(data.order.status).toBe(newStatus);
+      
+      console.log(`✅ Admin can update order status to ${newStatus}`);
+    } else {
+      console.log('⚠️  No orders to test status update');
+    }
+  });
 });
