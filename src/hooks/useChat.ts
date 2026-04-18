@@ -21,7 +21,8 @@ export const useChat = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3001/api/chat/message", {
+      const API_URL = (import.meta as any).env?.VITE_API_URL || '/_/backend/api';
+      const response = await fetch(`${API_URL}/chat/message`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
