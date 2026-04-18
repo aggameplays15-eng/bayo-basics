@@ -60,7 +60,7 @@ const App = () => (
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route
-                  path="/admin"
+                  path="/mb04"
                   element={
                     <ProtectedRoute isAdmin={true}>
                       <Admin />
