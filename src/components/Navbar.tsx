@@ -159,9 +159,6 @@ const Navbar = () => {
                     </Link>
                   </>
                 )}
-                <Link to="/mb04" className="text-center text-xs font-bold text-muted-foreground hover:text-primary">
-                  Accès Administration
-                </Link>
               </div>
             </SheetContent>
           </Sheet>

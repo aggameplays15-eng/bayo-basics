@@ -14,7 +14,6 @@ const BottomNav = () => {
     { label: "Boutique", icon: ShoppingBag, path: "/products" },
     { label: "Panier", icon: ShoppingCart, path: "/cart", badge: totalItems },
     { label: "Commandes", icon: ClipboardList, path: "/orders" },
-    { label: "Admin", icon: User, path: "/mb04" },
   ];
 
   return (
