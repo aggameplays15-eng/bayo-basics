@@ -5,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import BottomNav from "@/components/BottomNav";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
-import PushNotificationManager from "@/components/PushNotificationManager";
+// import PushNotificationManager from "@/components/PushNotificationManager";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
@@ -31,7 +31,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background pb-0">
       <Navbar />
-      <PushNotificationManager />
+      {/* <PushNotificationManager /> */}
       
       {/* Bandeau défilant (Marquee) */}
       <div className="pt-24">
