@@ -205,11 +205,6 @@ export default function ChatBot() {
           <div className="absolute inset-0 bg-primary rounded-[1.5rem] animate-ping opacity-20 group-hover:opacity-0 transition-opacity" />
         )}
         {isOpen ? <X className="h-8 w-8" /> : <MessageCircle className="h-8 w-8" />}
-        {!isOpen && (
-          <div className="absolute -top-2 -right-2 bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full border-2 border-white">
-            1
-          </div>
-        )}
       </motion.button>
     </div>
   );
