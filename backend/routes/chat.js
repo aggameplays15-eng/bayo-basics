@@ -47,7 +47,14 @@ router.post('/message', async (req, res) => {
     const apiKey = process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
-      return res.status(500).json({ error: 'OpenRouter API key not configured' });
+      // Fallback response when API key is not configured
+      const fallbackResponses = [
+        "Je suis désolé, mais je ne peux pas répondre pour le moment. L'assistant IA n'est pas configuré. Veuillez contacter l'administrateur du site.",
+        "Désolé, le service d'IA n'est pas disponible actuellement. Essayez de me contacter plus tard ou utilisez notre formulaire de contact.",
+        "Je suis momentanément indisponible. Pour toute question sur nos produits, n'hésitez pas à nous contacter directement par téléphone ou email."
+      ];
+      const randomResponse = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+      return res.json({ message: randomResponse });
     }
 
     // Prepare product context for AI with images
