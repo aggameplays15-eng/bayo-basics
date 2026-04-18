@@ -44,8 +44,7 @@ console.log('Environment check:', {
 // Security middleware - Order matters!
 app.use(helmetConfig); // Security headers
 app.use(cors(corsOptions)); // CORS with strict origin checking
-// Temporarily disable rate limiting for debugging
-// app.use(generalLimiter); // Rate limiting for all routes
+app.use(generalLimiter); // Rate limiting for all routes
 app.use(compression()); // Compress responses for faster transfer
 
 // Caching middleware for performance
