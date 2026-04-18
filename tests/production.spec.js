@@ -177,13 +177,16 @@ test.describe('Bayo Basics Production Tests', () => {
     const data = await response.json();
     expect(data.user).toBeDefined();
     expect(data.user.role).toBe('admin');
+    expect(data.user.email).toBe('admin@bayo.com');
     expect(data.token).toBeDefined();
     
-    console.log('✅ Admin login works');
+    console.log('✅ 1. Admin login works');
+    console.log('   - Email:', data.user.email);
+    console.log('   - Role:', data.user.role);
+    console.log('   - Token received:', !!data.token);
   });
 
   test('Admin can access protected routes', async ({ request }) => {
-    // First login as admin
     const loginResponse = await request.post(`${API_URL}/auth/login`, {
       data: {
         email: 'admin@bayo.com',
@@ -194,7 +197,6 @@ test.describe('Bayo Basics Production Tests', () => {
     const loginData = await loginResponse.json();
     const token = loginData.token;
     
-    // Try to access admin-only route (all orders)
     const response = await request.get(`${API_URL}/orders`, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -206,11 +208,12 @@ test.describe('Bayo Basics Production Tests', () => {
     const data = await response.json();
     expect(data.orders).toBeDefined();
     
-    console.log(`✅ Admin can access protected routes (${data.orders.length} orders)`);
+    console.log('✅ 2. Admin can access protected routes');
+    console.log('   - Orders endpoint accessible');
+    console.log('   - Orders found:', data.orders.length);
   });
 
   test('Admin can create product', async ({ request }) => {
-    // Login as admin
     const loginResponse = await request.post(`${API_URL}/auth/login`, {
       data: {
         email: 'admin@bayo.com',
@@ -221,7 +224,6 @@ test.describe('Bayo Basics Production Tests', () => {
     const loginData = await loginResponse.json();
     const token = loginData.token;
     
-    // Create a test product
     const testProduct = {
       name: 'Test Product ' + Date.now(),
       description: 'Test product for automated testing',
@@ -244,9 +246,12 @@ test.describe('Bayo Basics Production Tests', () => {
     expect(data.product).toBeDefined();
     expect(data.product.name).toBe(testProduct.name);
     
-    console.log('✅ Admin can create product:', data.product.name);
+    console.log('✅ 3. Admin can create product');
+    console.log('   - Product name:', data.product.name);
+    console.log('   - Product ID:', data.product.id);
+    console.log('   - Price:', data.product.price);
     
-    // Clean up - delete the test product
+    // Clean up
     await request.delete(`${API_URL}/products/${data.product.id}`, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -254,8 +259,7 @@ test.describe('Bayo Basics Production Tests', () => {
     });
   });
 
-  test('Admin can update order status', async ({ request }) => {
-    // Login as admin
+  test('Admin can update product', async ({ request }) => {
     const loginResponse = await request.post(`${API_URL}/auth/login`, {
       data: {
         email: 'admin@bayo.com',
@@ -266,7 +270,112 @@ test.describe('Bayo Basics Production Tests', () => {
     const loginData = await loginResponse.json();
     const token = loginData.token;
     
-    // Get all orders
+    // Create a test product first
+    const createResponse = await request.post(`${API_URL}/products`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      data: {
+        name: 'Test Product ' + Date.now(),
+        description: 'Test product for automated testing',
+        price: 150000,
+        category: 'Accessoires',
+        image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500',
+        stock: 10
+      }
+    });
+    
+    const createData = await createResponse.json();
+    const productId = createData.product.id;
+    
+    // Update the product
+    const updateResponse = await request.put(`${API_URL}/products/${productId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      data: {
+        name: 'Updated Test Product',
+        price: 200000
+      }
+    });
+    
+    expect(updateResponse.ok()).toBeTruthy();
+    
+    const updateData = await updateResponse.json();
+    expect(updateData.product.name).toBe('Updated Test Product');
+    expect(updateData.product.price).toBe(200000);
+    
+    console.log('✅ 4. Admin can update product');
+    console.log('   - Product updated successfully');
+    console.log('   - New name:', updateData.product.name);
+    console.log('   - New price:', updateData.product.price);
+    
+    // Clean up
+    await request.delete(`${API_URL}/products/${productId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  });
+
+  test('Admin can delete product', async ({ request }) => {
+    const loginResponse = await request.post(`${API_URL}/auth/login`, {
+      data: {
+        email: 'admin@bayo.com',
+        password: 'admin123'
+      }
+    });
+    
+    const loginData = await loginResponse.json();
+    const token = loginData.token;
+    
+    // Create a test product first
+    const createResponse = await request.post(`${API_URL}/products`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      data: {
+        name: 'Test Product ' + Date.now(),
+        description: 'Test product for automated testing',
+        price: 150000,
+        category: 'Accessoires',
+        image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500',
+        stock: 10
+      }
+    });
+    
+    const createData = await createResponse.json();
+    const productId = createData.product.id;
+    
+    // Delete the product
+    const deleteResponse = await request.delete(`${API_URL}/products/${productId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    expect(deleteResponse.ok()).toBeTruthy();
+    
+    // Verify product is deleted
+    const getResponse = await request.get(`${API_URL}/products/${productId}`);
+    expect(getResponse.status()).toBe(404);
+    
+    console.log('✅ 5. Admin can delete product');
+    console.log('   - Product deleted successfully');
+    console.log('   - Product ID:', productId);
+  });
+
+  test('Admin can update order status', async ({ request }) => {
+    const loginResponse = await request.post(`${API_URL}/auth/login`, {
+      data: {
+        email: 'admin@bayo.com',
+        password: 'admin123'
+      }
+    });
+    
+    const loginData = await loginResponse.json();
+    const token = loginData.token;
+    
     const ordersResponse = await request.get(`${API_URL}/orders`, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -279,7 +388,6 @@ test.describe('Bayo Basics Production Tests', () => {
       const orderId = ordersData.orders[0].id;
       const newStatus = 'en_cours';
       
-      // Update order status
       const response = await request.put(`${API_URL}/orders/${orderId}/status`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -292,9 +400,276 @@ test.describe('Bayo Basics Production Tests', () => {
       const data = await response.json();
       expect(data.order.status).toBe(newStatus);
       
-      console.log(`✅ Admin can update order status to ${newStatus}`);
+      console.log('✅ 6. Admin can update order status');
+      console.log('   - Order ID:', orderId);
+      console.log('   - New status:', newStatus);
     } else {
-      console.log('⚠️  No orders to test status update');
+      console.log('⚠️  6. No orders to test status update');
     }
+  });
+
+  test('Admin can create delivery zone', async ({ request }) => {
+    const loginResponse = await request.post(`${API_URL}/auth/login`, {
+      data: {
+        email: 'admin@bayo.com',
+        password: 'admin123'
+      }
+    });
+    
+    const loginData = await loginResponse.json();
+    const token = loginData.token;
+    
+    const testZone = {
+      name: 'Test Zone ' + Date.now(),
+      price: 50000
+    };
+    
+    const response = await request.post(`${API_URL}/delivery`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      data: testZone
+    });
+    
+    expect(response.ok()).toBeTruthy();
+    
+    const data = await response.json();
+    expect(data.zone).toBeDefined();
+    expect(data.zone.name).toBe(testZone.name);
+    
+    console.log('✅ 7. Admin can create delivery zone');
+    console.log('   - Zone name:', data.zone.name);
+    console.log('   - Zone price:', data.zone.price);
+    console.log('   - Zone ID:', data.zone.id);
+    
+    // Clean up
+    await request.delete(`${API_URL}/delivery/${data.zone.id}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  });
+
+  test('Admin can update delivery zone', async ({ request }) => {
+    const loginResponse = await request.post(`${API_URL}/auth/login`, {
+      data: {
+        email: 'admin@bayo.com',
+        password: 'admin123'
+      }
+    });
+    
+    const loginData = await loginResponse.json();
+    const token = loginData.token;
+    
+    // Create a test zone first
+    const createResponse = await request.post(`${API_URL}/delivery`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      data: {
+        name: 'Test Zone ' + Date.now(),
+        price: 50000
+      }
+    });
+    
+    const createData = await createResponse.json();
+    const zoneId = createData.zone.id;
+    
+    // Update the zone
+    const updateResponse = await request.put(`${API_URL}/delivery/${zoneId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      data: {
+        price: 60000
+      }
+    });
+    
+    expect(updateResponse.ok()).toBeTruthy();
+    
+    const updateData = await updateResponse.json();
+    expect(updateData.zone.price).toBe(60000);
+    
+    console.log('✅ 8. Admin can update delivery zone');
+    console.log('   - Zone updated successfully');
+    console.log('   - New price:', updateData.zone.price);
+    
+    // Clean up
+    await request.delete(`${API_URL}/delivery/${zoneId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  });
+
+  test('Admin can delete delivery zone', async ({ request }) => {
+    const loginResponse = await request.post(`${API_URL}/auth/login`, {
+      data: {
+        email: 'admin@bayo.com',
+        password: 'admin123'
+      }
+    });
+    
+    const loginData = await loginResponse.json();
+    const token = loginData.token;
+    
+    // Create a test zone first
+    const createResponse = await request.post(`${API_URL}/delivery`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      data: {
+        name: 'Test Zone ' + Date.now(),
+        price: 50000
+      }
+    });
+    
+    const createData = await createResponse.json();
+    const zoneId = createData.zone.id;
+    
+    // Delete the zone
+    const deleteResponse = await request.delete(`${API_URL}/delivery/${zoneId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    expect(deleteResponse.ok()).toBeTruthy();
+    
+    console.log('✅ 9. Admin can delete delivery zone');
+    console.log('   - Zone deleted successfully');
+    console.log('   - Zone ID:', zoneId);
+  });
+
+  test('Admin can update site settings', async ({ request }) => {
+    const loginResponse = await request.post(`${API_URL}/auth/login`, {
+      data: {
+        email: 'admin@bayo.com',
+        password: 'admin123'
+      }
+    });
+    
+    const loginData = await loginResponse.json();
+    const token = loginData.token;
+    
+    // Get current settings
+    const getResponse = await request.get(`${API_URL}/settings`);
+    const getData = await getResponse.json();
+    
+    // Update settings
+    const response = await request.put(`${API_URL}/settings`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      data: {
+        logoText: 'BAYO TEST',
+        heroTitle: 'Test Title'
+      }
+    });
+    
+    expect(response.ok()).toBeTruthy();
+    
+    const data = await response.json();
+    expect(data.settings.logoText).toBe('BAYO TEST');
+    
+    console.log('✅ 10. Admin can update site settings');
+    console.log('   - Settings updated successfully');
+    console.log('   - New logo text:', data.settings.logoText);
+    
+    // Restore original settings
+    await request.put(`${API_URL}/settings`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      data: {
+        logoText: getData.settings.logoText,
+        heroTitle: getData.settings.heroTitle
+      }
+    });
+  });
+
+  test('Admin can create banner', async ({ request }) => {
+    const loginResponse = await request.post(`${API_URL}/auth/login`, {
+      data: {
+        email: 'admin@bayo.com',
+        password: 'admin123'
+      }
+    });
+    
+    const loginData = await loginResponse.json();
+    const token = loginData.token;
+    
+    const testBanner = {
+      image_url: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200',
+      title: 'Test Banner',
+      subtitle: 'Test subtitle',
+      link: '/products'
+    };
+    
+    const response = await request.post(`${API_URL}/settings/banners`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      data: testBanner
+    });
+    
+    expect(response.ok()).toBeTruthy();
+    
+    const data = await response.json();
+    expect(data.banner).toBeDefined();
+    expect(data.banner.title).toBe(testBanner.title);
+    
+    console.log('✅ 11. Admin can create banner');
+    console.log('   - Banner created successfully');
+    console.log('   - Banner title:', data.banner.title);
+    console.log('   - Banner ID:', data.banner.id);
+    
+    // Clean up
+    await request.delete(`${API_URL}/settings/banners/${data.banner.id}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  });
+
+  test('Admin can delete banner', async ({ request }) => {
+    const loginResponse = await request.post(`${API_URL}/auth/login`, {
+      data: {
+        email: 'admin@bayo.com',
+        password: 'admin123'
+      }
+    });
+    
+    const loginData = await loginResponse.json();
+    const token = loginData.token;
+    
+    // Create a test banner first
+    const createResponse = await request.post(`${API_URL}/settings/banners`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      data: {
+        image_url: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200',
+        title: 'Test Banner',
+        subtitle: 'Test subtitle',
+        link: '/products'
+      }
+    });
+    
+    const createData = await createResponse.json();
+    const bannerId = createData.banner.id;
+    
+    // Delete the banner
+    const deleteResponse = await request.delete(`${API_URL}/settings/banners/${bannerId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    expect(deleteResponse.ok()).toBeTruthy();
+    
+    console.log('✅ 12. Admin can delete banner');
+    console.log('   - Banner deleted successfully');
+    console.log('   - Banner ID:', bannerId);
   });
 });
