@@ -1,7 +1,7 @@
 "use client";
 
 import { Link, useLocation } from "react-router-dom";
-import { Home, ShoppingBag, ShoppingCart, User, ClipboardList } from "lucide-react";
+import { Home, ShoppingBag, ShoppingCart, User, ClipboardList, UserCircle } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ const BottomNav = () => {
     { label: "Boutique", icon: ShoppingBag, path: "/products" },
     { label: "Panier", icon: ShoppingCart, path: "/cart", badge: totalItems },
     { label: "Commandes", icon: ClipboardList, path: "/orders" },
+    { label: "Profil", icon: UserCircle, path: "/profile" },
   ];
 
   return (
