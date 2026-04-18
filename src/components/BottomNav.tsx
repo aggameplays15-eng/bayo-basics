@@ -12,7 +12,7 @@ const BottomNav = () => {
   const navItems = [
     { label: "Accueil", icon: Home, path: "/" },
     { label: "Boutique", icon: ShoppingBag, path: "/products" },
-    { label: "Panier", icon: ShoppingCart, path: "/cart", badge: totalItems },
+    { label: "Panier", icon: ShoppingCart, path: "/cart", badge: totalItems, isPrimary: true },
     { label: "Profil", icon: UserCircle, path: "/profile" },
   ];
 
@@ -28,19 +28,32 @@ const BottomNav = () => {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex flex-col items-center justify-center w-full h-12 transition-all relative rounded-full",
-                isActive ? "text-primary bg-primary/5" : "text-muted-foreground hover:text-primary"
+                "flex flex-col items-center justify-center transition-all relative",
+                item.isPrimary 
+                  ? "w-16 h-16 -mt-8 bg-primary text-white rounded-full shadow-xl shadow-primary/30" 
+                  : "w-full h-12 rounded-full",
+                !item.isPrimary && isActive ? "text-primary bg-primary/5" : "text-muted-foreground hover:text-primary"
               )}
             >
               <div className="relative">
-                <Icon className={cn("h-5 w-5", isActive && "fill-current/10")} />
+                <Icon className={cn(
+                  item.isPrimary ? "h-7 w-7" : "h-5 w-5",
+                  !item.isPrimary && isActive && "fill-current/10"
+                )} />
                 {item.badge !== undefined && item.badge > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-[9px] font-bold h-4 w-4 flex items-center justify-center rounded-full border-2 border-background">
+                  <span className={cn(
+                    "absolute -top-2 -right-2 font-bold h-4 w-4 flex items-center justify-center rounded-full border-2",
+                    item.isPrimary 
+                      ? "bg-rose-500 text-white border-white" 
+                      : "bg-primary text-primary-foreground border-background"
+                  )}>
                     {item.badge}
                   </span>
                 )}
               </div>
-              <span className="text-[9px] mt-1 font-bold uppercase tracking-tighter">{item.label}</span>
+              {!item.isPrimary && (
+                <span className="text-[9px] mt-1 font-bold uppercase tracking-tighter">{item.label}</span>
+              )}
             </Link>
           );
         })}
