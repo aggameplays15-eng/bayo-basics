@@ -81,6 +81,8 @@ const ProductCard = memo(({ product }: ProductCardProps) => {
               src={product.image} 
               alt={product.name} 
               loading="lazy"
+              decoding="async"
+              fetchPriority="low"
               className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-110"
             />
           </Link>
