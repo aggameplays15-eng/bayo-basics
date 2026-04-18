@@ -23,17 +23,21 @@ export const useApiData = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        console.log('Fetching data from API...');
         
         // Fetch products
         const productsRes = await productsAPI.getAll();
+        console.log('Products fetched:', productsRes);
         setProducts(productsRes.products);
         
         // Fetch settings
         const settingsRes = await settingsAPI.get();
+        console.log('Settings fetched:', settingsRes);
         setSettings(settingsRes.settings);
         
         // Fetch zones
         const zonesRes = await deliveryAPI.getZones();
+        console.log('Zones fetched:', zonesRes);
         setZones(zonesRes.zones);
         
       } catch (err) {
