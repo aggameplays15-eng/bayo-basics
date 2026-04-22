@@ -37,8 +37,22 @@ router.post('/', requireAuth, async (req, res) => {
         
         const order = orderResult.rows[0];
         
-        // Create order items
+        // Create order items and validate stock
         for (const item of items) {
+            // Check stock availability
+            const stockResult = await client.query(
+                `SELECT stock FROM products WHERE id = $1 AND is_active = true`,
+                [item.product_id]
+            );
+            if (stockResult.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ error: `Product not found: ${item.name}` });
+            }
+            if (stockResult.rows[0].stock < item.quantity) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ error: `Insufficient stock for: ${item.name}` });
+            }
+
             await client.query(
                 `INSERT INTO order_items (order_id, product_id, product_name, product_price, quantity, selected_size, selected_color)
                  VALUES ($1, $2, $3, $4, $5, $6, $7)`,

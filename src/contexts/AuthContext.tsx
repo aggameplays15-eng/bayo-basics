@@ -39,10 +39,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check authentication on mount
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('token');
+      // Support both sessionStorage (new) and localStorage (legacy migration)
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       if (!token) {
         setLoading(false);
         return;
+      }
+
+      // Migrate legacy localStorage token to sessionStorage
+      if (!sessionStorage.getItem('token') && localStorage.getItem('token')) {
+        sessionStorage.setItem('token', localStorage.getItem('token')!);
+        localStorage.removeItem('token');
       }
 
       try {

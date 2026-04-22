@@ -13,16 +13,19 @@ export interface ApiResponse<T> {
 
 // Get stored token
 const getToken = (): string | null => {
-    return localStorage.getItem('token');
+    return sessionStorage.getItem('token') || localStorage.getItem('token');
 };
 
 // Store token
 export const setToken = (token: string): void => {
-    localStorage.setItem('token', token);
+    // Use sessionStorage to limit XSS exposure (cleared on tab close)
+    sessionStorage.setItem('token', token);
+    localStorage.removeItem('token'); // clean up old storage
 };
 
 // Remove token
 export const removeToken = (): void => {
+    sessionStorage.removeItem('token');
     localStorage.removeItem('token');
 };
 

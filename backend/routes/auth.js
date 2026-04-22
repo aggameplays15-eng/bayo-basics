@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import pool from '../db/config.js';
 import { generateToken, requireAuth } from '../middleware/auth.js';
+import { validatePassword } from '../middleware/security.js';
 import { sendWelcomeEmail } from '../services/email.js';
 
 const router = express.Router();
@@ -18,9 +19,15 @@ router.post('/register', async (req, res) => {
             });
         }
         
-        if (password.length < 6) {
+        if (password.length < 8) {
             return res.status(400).json({ 
-                error: 'Password must be at least 6 characters' 
+                error: 'Password must be at least 8 characters' 
+            });
+        }
+
+        if (!validatePassword(password)) {
+            return res.status(400).json({
+                error: 'Password must be at least 8 characters and contain at least one uppercase letter or number'
             });
         }
         
@@ -80,7 +87,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// Login
+// Login — pas de validation de complexité ici, juste vérification en base
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -198,9 +205,15 @@ router.put('/password', requireAuth, async (req, res) => {
             });
         }
         
-        if (newPassword.length < 6) {
+        if (newPassword.length < 8) {
             return res.status(400).json({ 
-                error: 'New password must be at least 6 characters' 
+                error: 'New password must be at least 8 characters' 
+            });
+        }
+
+        if (!validatePassword(newPassword)) {
+            return res.status(400).json({
+                error: 'Password must be at least 8 characters and contain at least one uppercase letter or number'
             });
         }
         

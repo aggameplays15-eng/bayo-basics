@@ -2,10 +2,10 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import cors from 'cors';
 
-// Rate limiting configurations
+// Rate limiting configurations — production-safe values
 export const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 1000, // 1000 requests per IP (increased for testing)
+    max: 200,
     message: { error: 'Too many requests, please try again later' },
     standardHeaders: true,
     legacyHeaders: false,
@@ -13,15 +13,21 @@ export const generalLimiter = rateLimit({
 
 export const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // 10 attempts (increased for testing)
+    max: 10,
     skipSuccessfulRequests: true,
     message: { error: 'Too many login attempts, please try again later' },
 });
 
 export const apiLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    max: 100, // 100 requests per minute for API endpoints (increased for testing)
+    max: 30,
     message: { error: 'API rate limit exceeded' },
+});
+
+export const chatLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 15,
+    message: { error: 'Chat rate limit exceeded' },
 });
 
 // CORS configuration
@@ -64,7 +70,7 @@ export const helmetConfig = helmet({
             frameSrc: ["'none'"],
         },
     },
-    crossOriginEmbedderPolicy: false, // Disabled for compatibility
+    crossOriginEmbedderPolicy: false,
     hsts: {
         maxAge: 31536000,
         includeSubDomains: true,
@@ -75,11 +81,18 @@ export const helmetConfig = helmet({
 // Input sanitization helper
 export const sanitizeInput = (input) => {
     if (typeof input !== 'string') return '';
-    // Remove potentially dangerous characters
     return input
         .replace(/[<>"']/g, '')
         .trim()
-        .substring(0, 1000); // Limit length
+        .substring(0, 1000);
+};
+
+// Password strength validation
+export const validatePassword = (password) => {
+    if (!password || typeof password !== 'string') return false;
+    if (password.length < 8) return false;
+    if (!/[A-Z]/.test(password) && !/[0-9]/.test(password)) return false;
+    return true;
 };
 
 // SQL injection pattern detection
@@ -100,7 +113,6 @@ export const secureErrorHandler = (err, req, res, next) => {
     
     const isDev = process.env.NODE_ENV === 'development';
     
-    // Don't expose internal errors in production
     if (err.message === 'Not allowed by CORS') {
         return res.status(403).json({ error: 'Access denied' });
     }

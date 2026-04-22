@@ -37,7 +37,7 @@ async function setupDatabase() {
         );
         
         console.log('✅ Database setup complete!');
-        console.log('   Admin: mohamedddbayo@gmail.com / 171204*');
+        console.log('   Admin account configured.');
         
         // Insert sample products if none exist
         const productsResult = await pool.query('SELECT COUNT(*) FROM products');

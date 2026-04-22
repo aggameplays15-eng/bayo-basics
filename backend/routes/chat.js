@@ -1,5 +1,6 @@
 import express from 'express';
 import fetch from 'node-fetch';
+import { optionalAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -36,8 +37,8 @@ const validateProducts = (products) => {
   return products.slice(0, 50); // Limit to 50 products max
 };
 
-// Chat endpoint - uses backend API key
-router.post('/message', async (req, res) => {
+// Chat endpoint - uses backend API key, optional auth for rate limiting
+router.post('/message', optionalAuth, async (req, res) => {
   try {
     let { message, products } = req.body;
     

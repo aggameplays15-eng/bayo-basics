@@ -5,23 +5,9 @@ import { requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// File filter
-const fileFilter = (req, res, next) => {
-  const allowedTypes = /jpeg|jpg|png|gif|webp/;
-  
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
-  }
-
-  const extname = allowedTypes.test(req.file.originalname.toLowerCase());
-  const mimetype = allowedTypes.test(req.file.mimetype);
-
-  if (mimetype && extname) {
-    next();
-  } else {
-    res.status(400).json({ error: 'Only image files (JPEG, PNG, GIF, WebP) are allowed' });
-  }
-};
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+const ALLOWED_EXTENSIONS = /\.(jpeg|jpg|png|gif|webp)$/i;
+const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
 // Upload endpoint - protected by admin authentication
 router.post('/', requireAdmin, async (req, res) => {
@@ -31,20 +17,32 @@ router.post('/', requireAdmin, async (req, res) => {
     }
 
     const { file, filename, contentType } = req.body;
-    
-    // Validate file size (5MB limit)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.length > maxSize) {
+
+    // Validate contentType against whitelist (never trust client input)
+    if (!contentType || !ALLOWED_MIME_TYPES.includes(contentType)) {
+      return res.status(400).json({ error: 'Only image files (JPEG, PNG, GIF, WebP) are allowed' });
+    }
+
+    // Validate filename extension
+    if (filename && !ALLOWED_EXTENSIONS.test(filename)) {
+      return res.status(400).json({ error: 'Invalid file extension' });
+    }
+
+    // Calculate real byte size from base64 string
+    const base64Data = file.replace(/^data:[^;]+;base64,/, '');
+    const byteSize = Math.ceil((base64Data.length * 3) / 4);
+
+    if (byteSize > MAX_SIZE_BYTES) {
       return res.status(400).json({ error: 'File too large (max 5MB)' });
     }
 
-    // Generate cryptographically secure filename
+    // Generate cryptographically secure filename — never use client-provided name
     const randomName = crypto.randomBytes(32).toString('hex');
-    const ext = contentType.split('/')[1] || 'jpg';
+    const ext = contentType.split('/')[1].replace('jpeg', 'jpg');
     const safeFilename = `img-${randomName}.${ext}`;
 
     // Upload to Vercel Blob
-    const blob = await put(safeFilename, file, {
+    const blob = await put(safeFilename, Buffer.from(base64Data, 'base64'), {
       access: 'public',
       contentType: contentType,
     });
@@ -53,7 +51,7 @@ router.post('/', requireAdmin, async (req, res) => {
       message: 'Image uploaded successfully',
       url: blob.url,
       filename: safeFilename,
-      size: file.length
+      size: byteSize
     });
   } catch (error) {
     console.error('Upload error:', error);
