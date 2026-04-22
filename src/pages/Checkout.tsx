@@ -13,10 +13,12 @@ import { toast } from "sonner";
 import { CheckCircle2, Truck, CreditCard, MapPin, Mail } from "lucide-react";
 import { useApiData } from "@/hooks/useApiData";
 import { ordersAPI } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Checkout = () => {
   const { cart, totalPrice, clearCart } = useCart();
   const { zones, loading: zonesLoading } = useApiData();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,6 +36,11 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      toast.error("Vous devez être connecté pour passer une commande");
+      navigate("/login");
+      return;
+    }
     if (!selectedZoneId) {
       toast.error("Veuillez sélectionner une zone de livraison");
       return;

@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import pool from '../db/config.js';
 import { generateToken, requireAuth } from '../middleware/auth.js';
+import { sendWelcomeEmail } from '../services/email.js';
 
 const router = express.Router();
 
@@ -34,21 +35,32 @@ router.post('/register', async (req, res) => {
                 error: 'Email already registered' 
             });
         }
+
+        // Block registration with admin email
+        const ADMIN_EMAIL = 'mohamedddbayo@gmail.com';
+        if (email.toLowerCase() === ADMIN_EMAIL) {
+            return res.status(403).json({ error: 'Registration not allowed for this email' });
+        }
         
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
         
-        // Create user
+        // Create user — role is always 'user', never admin
         const result = await pool.query(
-            `INSERT INTO users (name, email, password_hash, phone, address) 
-             VALUES ($1, $2, $3, $4, $5) 
+            `INSERT INTO users (name, email, password_hash, phone, address, role) 
+             VALUES ($1, $2, $3, $4, $5, 'user') 
              RETURNING id, name, email, phone, address, role, created_at`,
             [name, email.toLowerCase(), hashedPassword, phone || null, address || null]
         );
         
         const user = result.rows[0];
         const token = generateToken(user);
-        
+
+        // Send welcome email (non-blocking)
+        sendWelcomeEmail({ name: user.name, email: user.email }).catch(err =>
+            console.error('Welcome email failed:', err.message)
+        );
+
         res.status(201).json({
             message: 'User created successfully',
             user: {

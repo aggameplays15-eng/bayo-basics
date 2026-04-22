@@ -54,6 +54,16 @@ export interface SiteSettings {
   banners: BannerItem[];
 }
 
+export interface OrderItem {
+  id: string;
+  productId?: string;
+  productName: string;
+  productPrice: number;
+  quantity: number;
+  selectedSize?: string;
+  selectedColor?: string;
+}
+
 export interface Order {
   id: string;
   customerName: string;
@@ -62,7 +72,7 @@ export interface Order {
   address: string;
   city: string;
   deliveryFee: number;
-  items: CartItem[];
+  items: OrderItem[];
   total: number;
   status: 'En attente' | 'Livré' | 'Annulé';
   createdAt: string;

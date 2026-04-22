@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, isAdmin } = useAuth();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,11 +22,9 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      await login(email, password);
+      const user = await login(email, password);
       toast.success("Connexion réussie !");
-      
-      // Redirect based on role
-      if (isAdmin) {
+      if (user.role === 'admin') {
         navigate("/mb04");
       } else {
         navigate("/");

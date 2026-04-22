@@ -46,26 +46,19 @@ app.use(helmetConfig); // Security headers
 app.use(cors(corsOptions)); // CORS with strict origin checking
 app.use(generalLimiter); // Rate limiting for all routes
 app.use(compression()); // Compress responses for faster transfer
+app.use(express.json({ limit: '10mb' })); // Body parser with size limit
 
 // Caching middleware for performance
 app.use((req, res, next) => {
-  // Cache static assets and products for 1 hour
   if (req.path.startsWith('/uploads') || req.path.startsWith('/api/products')) {
     res.set('Cache-Control', 'public, max-age=3600');
-  }
-  // Cache settings for 30 minutes
-  else if (req.path.startsWith('/api/settings')) {
+  } else if (req.path.startsWith('/api/settings')) {
     res.set('Cache-Control', 'public, max-age=1800');
-  }
-  // No caching for auth and orders
-  else if (req.path.startsWith('/api/auth') || req.path.startsWith('/api/orders')) {
+  } else if (req.path.startsWith('/api/auth') || req.path.startsWith('/api/orders')) {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
   }
   next();
 });
-
-app.use(generalLimiter); // Rate limiting for all routes
-app.use(express.json({ limit: '10mb' })); // Body parser with size limit
 
 // Serve static files from uploads directory with caching
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {

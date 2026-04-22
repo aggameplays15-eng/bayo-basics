@@ -24,17 +24,23 @@ export const useApiData = () => {
       try {
         setLoading(true);
         
-        // Fetch products
-        const productsRes = await productsAPI.getAll();
+        // Fetch products, settings, zones in parallel
+        const [productsRes, settingsRes, zonesRes] = await Promise.all([
+          productsAPI.getAll(),
+          settingsAPI.get(),
+          deliveryAPI.getZones(),
+        ]);
         setProducts(productsRes.products);
-        
-        // Fetch settings
-        const settingsRes = await settingsAPI.get();
         setSettings(settingsRes.settings);
-        
-        // Fetch zones
-        const zonesRes = await deliveryAPI.getZones();
         setZones(zonesRes.zones);
+
+        // Try to fetch orders (only succeeds for admin)
+        try {
+          const ordersRes = await ordersAPI.getAll();
+          setOrders(ordersRes.orders);
+        } catch {
+          // Non-admin users won't have access — silently ignore
+        }
         
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -46,8 +52,6 @@ export const useApiData = () => {
 
     fetchData();
   }, []);
-
-  // Product CRUD
   const addProduct = useCallback(async (product: Omit<Product, 'id'>) => {
     try {
       const response = await productsAPI.create(product);

@@ -94,11 +94,11 @@ const Profile = () => {
               className="bg-white rounded-[2.5rem] p-8 shadow-sm text-center"
             >
               <div className="relative w-32 h-32 mx-auto mb-6">
-                <img 
-                  src={user.avatar} 
-                  alt={user.name} 
-                  className="w-full h-full object-cover rounded-[2rem] shadow-xl"
-                />
+                <div className="w-full h-full rounded-[2rem] shadow-xl bg-primary/10 flex items-center justify-center">
+                  <span className="text-4xl font-black text-primary">
+                    {user.name?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
                 <div className="absolute -bottom-2 -right-2 bg-primary text-white p-2 rounded-xl shadow-lg">
                   <Settings className="h-4 w-4" />
                 </div>
@@ -173,9 +173,11 @@ const Profile = () => {
                           <Package className="h-8 w-8" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black text-primary uppercase tracking-widest">Commande #{order.id.slice(0, 8)}</p>
+                          <p className="text-[10px] font-black text-primary uppercase tracking-widest">Commande #{String(order.id).slice(0, 8)}</p>
                           <h4 className="font-bold text-lg">{order.total.toLocaleString()} GNF</h4>
-                          <p className="text-xs text-muted-foreground">{new Date().toLocaleDateString()}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {order.createdAt ? new Date(order.createdAt).toLocaleDateString("fr-FR") : "—"}
+                          </p>
                         </div>
                       </div>
                       

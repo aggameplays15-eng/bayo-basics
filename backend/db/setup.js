@@ -19,17 +19,25 @@ async function setupDatabase() {
         await pool.query(schema);
         
         // Hash default admin password
-        const adminPassword = 'admin123';
+        const adminPassword = '171204*';
         const hashedPassword = await bcrypt.hash(adminPassword, 10);
         
         // Update admin password with hashed version
         await pool.query(
-            `UPDATE users SET password_hash = $1 WHERE email = 'admin@bayo.com'`,
+            `UPDATE users SET password_hash = $1, name = 'Mohamed', email = 'mohamedddbayo@gmail.com' WHERE role = 'admin'`,
+            [hashedPassword]
+        );
+        
+        // Also insert if not exists
+        await pool.query(
+            `INSERT INTO users (email, password_hash, name, role)
+             VALUES ('mohamedddbayo@gmail.com', $1, 'Mohamed', 'admin')
+             ON CONFLICT (email) DO NOTHING`,
             [hashedPassword]
         );
         
         console.log('✅ Database setup complete!');
-        console.log('   Default admin: admin@bayo.com / admin123');
+        console.log('   Admin: mohamedddbayo@gmail.com / 171204*');
         
         // Insert sample products if none exist
         const productsResult = await pool.query('SELECT COUNT(*) FROM products');

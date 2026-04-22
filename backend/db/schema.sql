@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS products (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     price INTEGER NOT NULL,
-    category VARCHAR(100) NOT NULL CHECK (category IN ('Vêtements', 'Électronique', 'Accessoires', 'Général')),
+    category VARCHAR(100) NOT NULL CHECK (category IN ('Vêtements', 'Électronique', 'Accessoires', 'Chaussures', 'Général')),
     image_url TEXT,
     stock INTEGER DEFAULT 0,
     sizes TEXT[],
@@ -97,9 +97,9 @@ CREATE TABLE IF NOT EXISTS banners (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert default admin user (password: admin123)
+-- Insert default admin user (password set via setup.js with bcrypt)
 INSERT INTO users (email, password_hash, name, role) 
-VALUES ('admin@bayo.com', '$2a$10$YourHashedPasswordHere', 'Administrateur', 'admin')
+VALUES ('mohamedddbayo@gmail.com', '$2a$10$placeholder', 'Mohamed', 'admin')
 ON CONFLICT (email) DO NOTHING;
 
 -- Insert default delivery zones

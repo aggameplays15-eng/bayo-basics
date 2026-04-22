@@ -1,6 +1,7 @@
 import express from 'express';
 import pool from '../db/config.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
+import { sendOrderConfirmationEmail, sendAdminNewOrderEmail, sendOrderStatusEmail } from '../services/email.js';
 
 const router = express.Router();
 
@@ -52,7 +53,36 @@ router.post('/', requireAuth, async (req, res) => {
         }
         
         await client.query('COMMIT');
-        
+
+        // Send emails (non-blocking)
+        const emailOrder = {
+            id: order.id.toString(),
+            customerName: order.customer_name,
+            customerPhone: order.customer_phone,
+            customerEmail: order.customer_email,
+            address: order.address,
+            city: order.city,
+            deliveryFee: order.delivery_fee,
+            total: order.total
+        };
+        const emailItems = items.map(item => ({
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity
+        }));
+
+        sendOrderConfirmationEmail({
+            name: order.customer_name,
+            email: order.customer_email,
+            order: emailOrder,
+            items: emailItems
+        }).catch(err => console.error('Order confirmation email failed:', err.message));
+
+        sendAdminNewOrderEmail({
+            order: emailOrder,
+            items: emailItems
+        }).catch(err => console.error('Admin order email failed:', err.message));
+
         res.status(201).json({
             message: 'Order created successfully',
             order: {
@@ -270,6 +300,21 @@ router.put('/:id/status', requireAdmin, async (req, res) => {
         }
         
         const order = result.rows[0];
+
+        // Send status update email to customer (non-blocking)
+        const userResult = await pool.query(
+            `SELECT u.name, u.email FROM users u
+             JOIN orders o ON o.user_id = u.id
+             WHERE o.id = $1`, [orderId]
+        );
+        if (userResult.rows.length > 0) {
+            sendOrderStatusEmail({
+                name: userResult.rows[0].name,
+                email: userResult.rows[0].email,
+                order: { id: orderId, status, total: order.total, city: order.city }
+            }).catch(err => console.error('Status email failed:', err.message));
+        }
+
         res.json({
             message: 'Order status updated',
             order: {

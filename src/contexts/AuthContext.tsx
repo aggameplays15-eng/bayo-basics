@@ -9,7 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   updateProfile: (data: ProfileUpdateData) => Promise<void>;
@@ -63,6 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const response = await authAPI.login({ email, password });
     setToken(response.token);
     setUser(response.user);
+    return response.user;
   }, []);
 
   const register = useCallback(async (data: RegisterData) => {

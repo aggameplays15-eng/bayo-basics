@@ -1,25 +1,62 @@
 "use client";
 
 import { useParams, Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import BottomNav from "@/components/BottomNav";
 import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, ArrowLeft, Share2, Check, Star } from "lucide-react";
-import { useAdminData } from "@/hooks/useAdminData";
+import { productsAPI } from "@/services/api";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { Product } from "@/types";
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const { products } = useAdminData();
   const { addToCart } = useCart();
-  
-  const product = products.find(p => p.id === id);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loadingProduct, setLoadingProduct] = useState(true);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState<string>("");
+
+  useEffect(() => {
+    if (!id) return;
+    const fetch = async () => {
+      try {
+        const res = await productsAPI.getById(id);
+        setProduct(res.product);
+      } catch {
+        setProduct(null);
+      } finally {
+        setLoadingProduct(false);
+      }
+    };
+    fetch();
+  }, [id]);
+
+  if (loadingProduct) {
+    return (
+      <div className="min-h-screen bg-background pb-24 md:pb-0">
+        <Navbar />
+        <div className="container mx-auto px-4 py-12">
+          <Skeleton className="h-12 w-12 rounded-full mb-8" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <Skeleton className="aspect-square rounded-[3rem]" />
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-3/4 rounded-xl" />
+              <Skeleton className="h-10 w-1/2 rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-16 w-full rounded-full" />
+            </div>
+          </div>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
 
   if (!product) return null;
 
